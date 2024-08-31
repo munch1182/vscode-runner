@@ -14,16 +14,58 @@
   "contributes": {
     "commands": [
       {
-        "command": "munch1182-vscode-runner.helloWorld",
-        "title": "Hello World"
+        "command": "munch1182-vscode-runner.runFile",
+        "title": "Run File"
+      },
+      {
+        "command": "munch1182-vscode-runner.runProject",
+        "title": "Run Project"
+      },
+      {
+        "command": "munch1182-vscode-runner.runProjectOther",
+        "title": "Run Project Other"
       }
-    ]
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "munch1182-vscode-runner.runFile",
+          "group": "navigation"
+        },
+        {
+          "command": "munch1182-vscode-runner.runProject",
+          "group": "navigation"
+        },
+        {
+          "command": "munch1182-vscode-runner.runProjectOther",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "vscode-runner",
+      "properties": {
+        "vscode-runner.fileRunner": {
+          "type": "object",
+          "default": {
+            ".js": "cd $dir && node $filename",
+            ".ts": "cd $dir && ts-node $filename",
+            ".rs": "cd $dir && rustc $filename && $dir$sep$filenameWithoutExt && del $filenameWithoutExt.exe && del $filenameWithoutExt.pdb",
+            ".py": "cd $dir && python -u $filename"
+          }
+        }
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/munch1182/vscode-runner.git"
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    "pretest": "npm run compile &&&& npm run lint",
     "lint": "eslint src --ext ts",
     "test": "vscode-test"
   },
