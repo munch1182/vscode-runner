@@ -2,6 +2,9 @@
   "name": "munch1182-vscode-runner",
   "displayName": "vscode-runner",
   "description": "runner",
+  "publisher": "munch1182",
+  "author": "munch1182",
+  "license": "MIT",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.92.0"
@@ -20,10 +23,6 @@
       {
         "command": "munch1182-vscode-runner.runProject",
         "title": "Run Project"
-      },
-      {
-        "command": "munch1182-vscode-runner.runProjectOther",
-        "title": "Run Project Other"
       }
     ],
     "menus": {
@@ -34,10 +33,6 @@
         },
         {
           "command": "munch1182-vscode-runner.runProject",
-          "group": "navigation"
-        },
-        {
-          "command": "munch1182-vscode-runner.runProjectOther",
           "group": "navigation"
         }
       ]

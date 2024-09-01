@@ -15,7 +15,7 @@ export class Runner {
   // 文件扩展名，含.，当传入文件夹时为空
   readonly ext?: string;
   // 文件名，不含拓展，当传入文件夹时为空
-  readonly name?: string;
+  readonly filenameWithoutExt?: string;
 
   readonly uri: vscode.Uri;
 
@@ -25,19 +25,19 @@ export class Runner {
     this.dir = path.dirname(filePath);
     this.ext = path.extname(filePath);
     if (this.ext) {
-      this.name = path.basename(filePath, this.ext);
+      this.filenameWithoutExt = path.basename(filePath, this.ext);
     }
   }
 
   checkValue(): boolean {
-    return !(!this.name || !this.ext);
+    return !(!this.filenameWithoutExt || !this.ext);
   }
 
   filePath(): string | undefined {
     if (!this.checkValue()) {
       return undefined;
     }
-    return path.join(this.dir, this.name! + this.ext!);
+    return path.join(this.dir, this.filenameWithoutExt! + this.ext!);
   }
 
   run() {
@@ -50,10 +50,10 @@ export class Runner {
   convertCmd(cmd: string): string {
     let str = cmd;
     str = str.replace(/\$dir/g, this.dir).replace(/\$sep/g, path.sep);
-    if (this.name) {
-      str = str.replace(/\$filenameWithoutExt/g, this.name);
+    if (this.filenameWithoutExt) {
+      str = str.replace(/\$filenameWithoutExt/g, this.filenameWithoutExt);
       if (this.ext) {
-        str = str.replace(/\$filename/g, this.name + this.ext);
+        str = str.replace(/\$filename/g, this.filenameWithoutExt + this.ext);
       }
     }
     return str;
@@ -61,6 +61,7 @@ export class Runner {
 
   /**
    * 低于7.0版本的powershell不支持&&，需要替换为;
+   * 因为无法判断 powershell版本，所以全部替换
    */
   convertCmd4Powershell(cmd: string): string {
     return cmd.replace(/ &&/g, `; `).replace(/&&/g, `; `);
@@ -72,6 +73,7 @@ export class Runner {
     // 如果是powershell，需要替换
     const opts = terminal.creationOptions;
 
+    // 创建terminal时，传入了shellPath，所以此处不会为空
     if (
       "shellPath" in opts &&
       opts.shellPath?.toLocaleLowerCase()?.includes("powershell")
@@ -84,7 +86,7 @@ export class Runner {
     terminal.sendText(cmd);
   }
 
-  getTerminal() {
+  getTerminal(): vscode.Terminal {
     const terminals = vscode.window.terminals;
     let terminal = null;
     if (terminals) {
@@ -118,6 +120,7 @@ export class FileRunner extends Runner {
       return this.mdHtmlPrew();
     }
     const code = this.getFileRunnerCodeFormConfig();
+    log("runner code: " + code);
     if (!code) {
       notifyErr("cannot find runner for this file");
       return;
@@ -127,19 +130,18 @@ export class FileRunner extends Runner {
   }
 
   getFileRunnerCodeFormConfig(): string | undefined {
-    const cofig: any = vscode.workspace
+    const cofig = vscode.workspace
       .getConfiguration(NAME_CONFIG_SECTION)
-      .get(NAME_CONFIG_FILE_RUNNER);
-    if (cofig === undefined || cofig[this.ext!] === undefined) {
-      return undefined;
-    }
-    return cofig[this.ext!];
+      .get<any>(NAME_CONFIG_FILE_RUNNER);
+    return cofig ? cofig[this.ext!] : undefined;
   }
 
   /**
    * 将md文件预览为html并在浏览器中打开
    */
-  mdHtmlPrew() {}
+  mdHtmlPrew() {
+    notifyErr("not implemented");
+  }
 }
 
 /**
@@ -173,10 +175,6 @@ class Project {
 
   constructor(dir: string) {
     this.dir = dir;
-  }
-
-  check(): boolean {
-    throw new Error("not implemented");
   }
 
   getRunCMD(): string {
@@ -231,6 +229,7 @@ class TauriProject extends Project {
     return "npm run tauri dev";
   }
 }
+
 class RustProject extends Project {
   static isProject(dir: string): boolean {
     const cargoToml = find(dir, "Cargo.toml");
@@ -247,23 +246,24 @@ class RustProject extends Project {
 }
 
 /**
- * 在 dir 文件夹及其子文件夹中查找名为 file 的文件，成功则返回该文件的路径
+ * 在 filepath 文件/文件夹及其子文件夹中查找名为 file 的文件，成功则返回该文件的路径
  */
-function find(dir: string, file: string): string | undefined {
-  if (!fs.existsSync(dir)) {
+function find(filepath: string, filename: string): string | undefined {
+  if (!fs.existsSync(filepath)) {
     return undefined;
   }
-  if (!fs.lstatSync(dir).isDirectory()) {
-    return path.basename(dir) === file ? dir : undefined;
+
+  const basename = path.basename(filepath);
+  if (fs.lstatSync(filepath).isFile()) {
+    return basename === filename ? filepath : undefined;
   }
-  const dirname = path.basename(dir);
-  if (EXCLUDE_DIR.includes(dirname)) {
+  // 排除掉一般的生成文件夹
+  if (EXCLUDE_DIR.includes(basename)) {
     return undefined;
   }
-  const dirs = fs.readdirSync(dir);
+  const dirs = fs.readdirSync(filepath);
   for (const item of dirs) {
-    const _path = `${dir}${path.sep}${item}`;
-    const result = find(_path, file);
+    const result = find(`${filepath}${path.sep}${item}`, filename);
     if (result) {
       return result;
     }

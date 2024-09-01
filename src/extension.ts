@@ -10,14 +10,9 @@ export function activate(context: vscode.ExtensionContext) {
     "munch1182-vscode-runner.runProject",
     (uri: vscode.Uri) => new ProjectRunner(uri).run()
   );
-  const runProjectOther = vscode.commands.registerCommand(
-    "munch1182-vscode-runner.runProjectOther",
-    (uri: vscode.Uri) => new ProjectRunner(uri).run()
-  );
 
   context.subscriptions.push(runFile);
   context.subscriptions.push(runProject);
-  context.subscriptions.push(runProjectOther);
 }
 
 export function deactivate() {}

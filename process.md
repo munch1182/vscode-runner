@@ -102,3 +102,19 @@ const config = vscode.workspace.getConfiguration("vscode-runner");
 const ccc1 = config.get("ccc1")["config1"];
 const ccc2 = config.get("ccc2");
 ```
+
+## 打包
+
+1. 安装`vsce`
+
+```bash
+npm i -g @vscode/vsce
+```
+
+2. 确保`package.json`中`publisher`和`name`字段存在，确保修改了`README.md`文件
+
+3. 打包
+
+```bash
+vsce package
+```
