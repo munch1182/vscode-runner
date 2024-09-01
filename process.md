@@ -12,8 +12,8 @@
 
 1. `runFile`: 读取当前文件后缀，并匹配配置文件的命令，将命令转为实际路径并执行。
 2. `runProject`：读取 vscode 打开的文件夹，并顺序判断是否是对应类型，再执行对应命令。优先执行读取配置中的命令。
-   1. `tauri`：判断是否是`rust`项目，并判断`build.rs`文件是否存在对应`tauri`内容，并执行`package.json`的`scripts`字段中的第一个命令。
-   2. `node`：判断`package.json`文件存在，执行其中`scripts`字段的第一个命令。
+   1. `tauri`：判断是否是`rust`项目+`node`项目，并执行`npm run tauri dev`。
+   2. `node`：判断`package.json`文件存在，并执行`npm run dev`。
    3. `rust`：判断`Cargo.toml`文件存在，并执行`cargo run`。
 
 ## 语法
