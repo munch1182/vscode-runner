@@ -118,3 +118,11 @@ npm i -g @vscode/vsce
 ```bash
 vsce package
 ```
+
+## Github Actions 集成
+
+用于自动打包并发布道`vscode`的插件市场
+
+1. 创建自己的`token`：参考[官方文档](https://code.visualstudio.com/api/working-with-extensions/publishing-extension#get-a-personal-access-token)
+2. 在`github`上添加`secrets`：在项目的`github`界面，选择`Settings/Security/Secrets and variables/Actions`，并选择`New repository secret`添加。
+3. 在`workflows`文件中使用该值
