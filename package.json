@@ -5,7 +5,7 @@
   "publisher": "munch1182",
   "author": "munch1182",
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -46,7 +46,9 @@
             ".js": "cd $dir && node $filename",
             ".ts": "cd $dir && ts-node $filename",
             ".rs": "cd $dir && rustc $filename && $dir$sep$filenameWithoutExt && del $filenameWithoutExt.exe && del $filenameWithoutExt.pdb",
-            ".py": "cd $dir && python -u $filename"
+            ".py": "cd $dir && python -u $filename",
+            ".ps1": "cd $dir && .$sep$filename",
+            ".bat": "cd $dir && .$sep$filenameWithoutExt"
           }
         }
       }
