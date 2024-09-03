@@ -5,7 +5,8 @@ import { notifyErr } from "./notify";
 import * as fs from "fs";
 
 const NAME_CONFIG_SECTION = "vscode-runner";
-const NAME_CONFIG_FILE_RUNNER = "fileRunner";
+const NAME_CONFIG_FILE_RUN_CODE = "fileRunner";
+const NAME_CONFIG_PROJECT_RUN_CODE = "projectRunner";
 const NAME_TERMINAL = "runner";
 const EXCLUDE_DIR = [".git", "node_modules", "dist", "build", "out", "debug"];
 
@@ -119,7 +120,7 @@ export class FileRunner extends Runner {
     if (this.ext === ".md") {
       return this.mdHtmlPrew();
     }
-    const code = this.getFileRunnerCodeFormConfig();
+    const code = this.getFileRunCodeFormConfig();
     log("runner code: " + code);
     if (!code) {
       notifyErr("cannot find runner for this file");
@@ -129,10 +130,10 @@ export class FileRunner extends Runner {
     this.execCmd(fileCmd);
   }
 
-  getFileRunnerCodeFormConfig(): string | undefined {
+  getFileRunCodeFormConfig(): string | undefined {
     const cofig = vscode.workspace
       .getConfiguration(NAME_CONFIG_SECTION)
-      .get<any>(NAME_CONFIG_FILE_RUNNER);
+      .get<any>(NAME_CONFIG_FILE_RUN_CODE);
     return cofig ? cofig[this.ext!] : undefined;
   }
 
@@ -191,6 +192,12 @@ class Project {
     // other
     return undefined;
   }
+
+  getProjectRunCodeFormConfig(type: string): string | undefined {
+    return vscode.workspace
+      .getConfiguration(NAME_CONFIG_SECTION)
+      .get<any>(NAME_CONFIG_PROJECT_RUN_CODE)[type];
+  }
 }
 
 class NodeProject extends Project {
@@ -204,7 +211,8 @@ class NodeProject extends Project {
   }
 
   getRunCMD(): string {
-    return "npm run dev";
+    const code = this.getProjectRunCodeFormConfig("node");
+    return code ? code : "npm run dev";
   }
 }
 
@@ -226,7 +234,8 @@ class TauriProject extends Project {
   }
 
   getRunCMD(): string {
-    return "npm run tauri dev";
+    const code = this.getProjectRunCodeFormConfig("tauri");
+    return code ? code : "npm run tauri dev";
   }
 }
 
@@ -241,7 +250,8 @@ class RustProject extends Project {
   }
 
   getRunCMD(): string {
-    return "cargo run";
+    const code = this.getProjectRunCodeFormConfig("rust");
+    return code ? code : "cargo run";
   }
 }
 

@@ -5,7 +5,7 @@
   "publisher": "munch1182",
   "author": "munch1182",
   "license": "MIT",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "engines": {
     "vscode": "^1.92.0"
   },
@@ -49,6 +49,14 @@
             ".py": "cd $dir && python -u $filename",
             ".ps1": "cd $dir && .$sep$filename",
             ".bat": "cd $dir && .$sep$filenameWithoutExt"
+          }
+        },
+        "vscode-runner.projectRunner": {
+          "type": "object",
+          "default": {
+            "node": "npm run dev",
+            "rust": "cargo run",
+            "tauri": "npm run tauri dev"
           }
         }
       }

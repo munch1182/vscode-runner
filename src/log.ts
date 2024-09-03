@@ -1,4 +1,4 @@
-const LOG_ENABLE = true;
+const LOG_ENABLE = false;
 
 export default function log(...args: any[]) {
   if (!LOG_ENABLE) {
