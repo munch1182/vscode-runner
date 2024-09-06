@@ -5,7 +5,7 @@
   "publisher": "munch1182",
   "author": "munch1182",
   "license": "MIT",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "engines": {
     "vscode": "^1.92.0"
   },

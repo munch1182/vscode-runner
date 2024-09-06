@@ -202,7 +202,7 @@ class Project {
 
 class NodeProject extends Project {
   static isProject(dir: string): boolean {
-    const pkgJson = find(dir, "package.json");
+    const pkgJson = findfile(dir, "package.json");
     log("find: " + pkgJson);
     if (!pkgJson) {
       return false;
@@ -241,7 +241,7 @@ class TauriProject extends Project {
 
 class RustProject extends Project {
   static isProject(dir: string): boolean {
-    const cargoToml = find(dir, "Cargo.toml");
+    const cargoToml = findfile(dir, "Cargo.toml");
     log("find: " + cargoToml);
     if (!cargoToml) {
       return false;
@@ -250,6 +250,30 @@ class RustProject extends Project {
   }
 
   getRunCMD(): string {
+    // 如果有src/main.rs，则是bin项目，即使同时存在src/lib.rs也视为bin项目
+    const mainsrcExists = fs.existsSync(
+      this.dir + path.sep + "src" + path.sep + "main.rs"
+    );
+
+    if (mainsrcExists) {
+      return "cargo run";
+    }
+    // 如果有src/lib.rs，则是lib项目
+    const libsrcExists = fs.existsSync(
+      this.dir + path.sep + "src" + path.sep + "lib.rs"
+    );
+    if (libsrcExists) {
+      const template = path.resolve(this.dir, "examples");
+      if (fs.existsSync(template) && fs.lstatSync(template).isDirectory()) {
+        const files = fs.readdirSync(template);
+        if (files && files.length > 0) {
+          // 只运行第一个命令
+          const name = files[0].replace(".rs", "");
+          return `cargo run --example ${name}`;
+        }
+      }
+    }
+    // 默认值也会返回
     const code = this.getProjectRunCodeFormConfig("rust");
     return code ? code : "cargo run";
   }
@@ -258,7 +282,7 @@ class RustProject extends Project {
 /**
  * 在 filepath 文件/文件夹及其子文件夹中查找名为 file 的文件，成功则返回该文件的路径
  */
-function find(filepath: string, filename: string): string | undefined {
+function findfile(filepath: string, filename: string): string | undefined {
   if (!fs.existsSync(filepath)) {
     return undefined;
   }
@@ -273,7 +297,7 @@ function find(filepath: string, filename: string): string | undefined {
   }
   const dirs = fs.readdirSync(filepath);
   for (const item of dirs) {
-    const result = find(`${filepath}${path.sep}${item}`, filename);
+    const result = findfile(`${filepath}${path.sep}${item}`, filename);
     if (result) {
       return result;
     }
