@@ -8,7 +8,16 @@ const NAME_CONFIG_SECTION = "vscode-runner";
 const NAME_CONFIG_FILE_RUN_CODE = "fileRunner";
 const NAME_CONFIG_PROJECT_RUN_CODE = "projectRunner";
 const NAME_TERMINAL = "runner";
-const EXCLUDE_DIR = [".git", "node_modules", "dist", "build", "out", "debug"];
+const EXCLUDE_DIR = [
+  ".vscode",
+  ".git",
+  "node_modules",
+  "dist",
+  "build",
+  "out",
+  "debug",
+  "target",
+];
 
 export class Runner {
   // 文件所在文件夹
@@ -62,7 +71,7 @@ export class Runner {
 
   /**
    * 低于7.0版本的powershell不支持&&，需要替换为;
-   * 因为无法判断 powershell版本，所以全部替换
+   * 因为无法判断powershell版本，所以全部替换
    */
   convertCmd4Powershell(cmd: string): string {
     return cmd.replace(/ &&/g, `; `).replace(/&&/g, `; `);
@@ -251,19 +260,15 @@ class RustProject extends Project {
 
   getRunCMD(): string {
     // 如果有src/main.rs，则是bin项目，即使同时存在src/lib.rs也视为bin项目
-    const mainsrcExists = fs.existsSync(
-      this.dir + path.sep + "src" + path.sep + "main.rs"
-    );
+    const mainsrcExists = fs.existsSync(path.join(this.dir, "src", "main.rs"));
 
     if (mainsrcExists) {
       return "cargo run";
     }
     // 如果有src/lib.rs，则是lib项目
-    const libsrcExists = fs.existsSync(
-      this.dir + path.sep + "src" + path.sep + "lib.rs"
-    );
+    const libsrcExists = fs.existsSync(path.join(this.dir, "src", "lib.rs"));
     if (libsrcExists) {
-      const template = path.resolve(this.dir, "examples");
+      const template = path.join(this.dir, "examples");
       if (fs.existsSync(template) && fs.lstatSync(template).isDirectory()) {
         const files = fs.readdirSync(template);
         if (files && files.length > 0) {
@@ -280,26 +285,34 @@ class RustProject extends Project {
 }
 
 /**
- * 在 filepath 文件/文件夹及其子文件夹中查找名为 file 的文件，成功则返回该文件的路径
+ * 在 filepath 文件/文件夹及其子文件夹中查找名为 file.ext 的文件，成功则返回该文件的路径
  */
 function findfile(filepath: string, filename: string): string | undefined {
   if (!fs.existsSync(filepath)) {
     return undefined;
   }
 
+  const findPath = path.join(filepath, filename);
+  // 如果文件存在，直接返回路径
+  // 否则寻找其它子文件夹中是否存在该文件
+  if (fs.existsSync(findPath)) {
+    return findPath;
+  }
+
   const basename = path.basename(filepath);
-  if (fs.lstatSync(filepath).isFile()) {
-    return basename === filename ? filepath : undefined;
-  }
   // 排除掉一般的生成文件夹
-  if (EXCLUDE_DIR.includes(basename)) {
-    return undefined;
-  }
-  const dirs = fs.readdirSync(filepath);
-  for (const item of dirs) {
-    const result = findfile(`${filepath}${path.sep}${item}`, filename);
-    if (result) {
-      return result;
+
+  for (const item of fs.readdirSync(filepath)) {
+    let itempath = path.join(filepath, item);
+
+    // 不需要比较文件
+    if (fs.lstatSync(itempath).isDirectory()) {
+      if (!EXCLUDE_DIR.includes(basename)) {
+        const result = findfile(itempath, filename);
+        if (result) {
+          return result;
+        }
+      }
     }
   }
 
