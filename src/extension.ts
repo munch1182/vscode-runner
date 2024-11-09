@@ -1,18 +1,43 @@
 import * as vscode from "vscode";
-import { FileRunner, ProjectRunner } from "./runner";
+import { Env } from "./env";
+import { runFile as rf } from "./filerunner";
+import { runProject as rp } from "./projectrunner";
 
 export function activate(context: vscode.ExtensionContext) {
-  const runFile = vscode.commands.registerCommand(
+  Env.ENABLE_LOG = false;
+  Env.log("activate");
+  const fileRunner = vscode.commands.registerCommand(
     "munch1182-vscode-runner.runFile",
-    (uri: vscode.Uri) => new FileRunner(uri).run()
+    runFile
   );
-  const runProject = vscode.commands.registerCommand(
+  const projectRunner = vscode.commands.registerCommand(
     "munch1182-vscode-runner.runProject",
-    (uri: vscode.Uri) => new ProjectRunner(uri).run()
+    runProject
   );
 
-  context.subscriptions.push(runFile);
-  context.subscriptions.push(runProject);
+  context.subscriptions.push(fileRunner);
+  context.subscriptions.push(projectRunner);
 }
 
 export function deactivate() {}
+
+function runFile(uri: vscode.Uri) {
+  collectEnv(uri, rf);
+}
+
+function runProject(uri: vscode.Uri) {
+  collectEnv(uri, rp);
+}
+
+function collectEnv(uri: vscode.Uri, callback: (env: Env) => void) {
+  Env.log("=============");
+  Env.log("collect env: " + uri);
+  const env = Env.collect(uri);
+  if (!env) {
+    Env.notifyErr("cannot know file");
+    return;
+  }
+
+  Env.log(`collect env:  ===> ${env.filePath}, ${env.workspaceDir}`);
+  callback(env);
+}

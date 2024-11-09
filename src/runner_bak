@@ -55,21 +55,6 @@ export class Runner {
   }
 
   /**
-   *  将配置命令转为实际执行的命令，即转换变量
-   */
-  convertCmd(cmd: string): string {
-    let str = cmd;
-    str = str.replace(/\$dir/g, this.dir).replace(/\$sep/g, path.sep);
-    if (this.filenameWithoutExt) {
-      str = str.replace(/\$filenameWithoutExt/g, this.filenameWithoutExt);
-      if (this.ext) {
-        str = str.replace(/\$filename/g, this.filenameWithoutExt + this.ext);
-      }
-    }
-    return str;
-  }
-
-  /**
    * 低于7.0版本的powershell不支持&&，需要替换为;
    * 因为无法判断powershell版本，所以全部替换
    */
@@ -152,6 +137,21 @@ export class FileRunner extends Runner {
   mdHtmlPrew() {
     notifyErr("not implemented");
   }
+
+  /**
+   *  将配置命令转为实际执行的命令，即转换变量
+   */
+  convertCmd(cmd: string): string {
+    let str = cmd;
+    str = str.replace(/\$dir/g, this.dir).replace(/\$sep/g, path.sep);
+    if (this.filenameWithoutExt) {
+      str = str.replace(/\$filenameWithoutExt/g, this.filenameWithoutExt);
+      if (this.ext) {
+        str = str.replace(/\$filename/g, this.filenameWithoutExt + this.ext);
+      }
+    }
+    return str;
+  }
 }
 
 /**
@@ -169,7 +169,9 @@ export class ProjectRunner extends Runner {
       notifyErr("cannot find project");
       return;
     }
-    const project = Project.buildProject(dir);
+    const file = this.filePath();
+
+    const project = Project.buildProject(file, dir);
     if (!project) {
       notifyErr("cannot find project");
       return;
@@ -191,7 +193,10 @@ class Project {
     throw new Error("not implemented");
   }
 
-  static buildProject(dir: string): Project | undefined {
+  static buildProject(
+    file: string | undefined,
+    dir: string
+  ): Project | undefined {
     // 判断是有顺序的，因为tauri包含rust项目和node项目
     // 所以，这3个判断合在一处
     const project = TauriProject.buildNodeRustProject(dir);
