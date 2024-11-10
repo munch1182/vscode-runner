@@ -6,8 +6,8 @@ import { Config, Env } from "./env";
  * 一个项目结构必然包含执行命令的项目路径和一个特定命名或者样式的文件
  */
 export abstract class Project {
-  protected readonly dir!: string;
-  protected readonly file!: string;
+  readonly dir!: string;
+  readonly file!: string;
 
   constructor(dir: string, file: string) {
     this.dir = dir;
@@ -55,22 +55,26 @@ class Finder {
     this.untill = untill;
   }
 
-  find(file: string): string | undefined {
-    return this._find(file, this.startDir);
+  /**
+   * 从dir中寻找是否存在file同名文件，从dir向外逐级文件夹寻找，直到untill为止
+   *
+   * 适用于单纯两级文件夹结构的项目
+   */
+  findSimple(filename: string): string | undefined {
+    return this._findFromCurr2Out(filename, this.startDir);
   }
 
-  _find(file: string, dir: string): string | undefined {
-    const found = path.join(dir, file);
+  _findFromCurr2Out(filename: string, dir: string): string | undefined {
+    const found = path.join(dir, filename);
     Env.log(`Find: ${found}`);
     if (fs.existsSync(found)) {
       Env.log(`Find: ${found} exist`);
       return found;
     }
     if (this.untill === dir) {
-      Env.log(`Find: not exist`);
       return undefined;
     }
-    return this._find(file, path.dirname(dir));
+    return this._findFromCurr2Out(filename, path.dirname(dir));
   }
 }
 
@@ -85,7 +89,7 @@ export abstract class OneLevelProject extends Project {
 
 export class NodejsProject extends OneLevelProject {
   static find(finder: Finder): NodejsProject | undefined {
-    const pkgJson = finder.find("package.json");
+    const pkgJson = finder.findSimple("package.json");
     return pkgJson ? new NodejsProject(pkgJson) : undefined;
   }
 
@@ -100,7 +104,7 @@ export class NodejsProject extends OneLevelProject {
 
 export class RustProject extends OneLevelProject {
   static find(finder: Finder): RustProject | undefined {
-    const cargoToml = finder.find("Cargo.toml");
+    const cargoToml = finder.findSimple("Cargo.toml");
     return cargoToml ? new RustProject(cargoToml) : undefined;
   }
 
@@ -115,13 +119,21 @@ export class RustProject extends OneLevelProject {
 
 export class TauriProject extends Project {
   static find(finder: Finder): TauriProject | undefined {
-    const tauriConfig = finder.find("tauri.conf.json");
-    return tauriConfig ? new TauriProject(tauriConfig) : undefined;
+    const node = NodejsProject.find(finder);
+    if (node) {
+      // rename?
+      const tauriConf = path.join(node.dir, "src-tauri", "tauri.conf.json");
+      if (fs.existsSync(tauriConf)) {
+        return new TauriProject(tauriConf);
+      }
+      return node;
+    }
+    return undefined;
   }
   constructor(tauriConf: string) {
     // tauri的conf文件在src-tauri目录下，所以需要向上两级目录
     const dir = path.dirname(path.dirname(tauriConf));
-    super(path.dirname(tauriConf), tauriConf);
+    super(dir, tauriConf);
   }
 
   runCode(): string | undefined {

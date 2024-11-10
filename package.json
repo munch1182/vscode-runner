@@ -44,8 +44,8 @@
           "type": "object",
           "default": {
             ".js": "cd ${dir} && node ${filename}",
-            ".ts": "cd ${dir} && tsc ${filename} --outDir .tmp && node ${dir}${sep}.tmp${sep}${filenameWithoutExt}.js && rm -rf ${dir}${sep}.tmp",
-            ".rs": "cd ${dir} && rustc ${filename} --out-dir .tmp && ${dir}${sep}.tmp${sep}${filenameWithoutExt} && rm -rf ${dir}${sep}.tmp",
+            ".ts": "cd ${dir} && tsc ${filename} --outDir .tmp && node ${dir}${sep}.tmp${sep}${filenameWithoutExt}.js && ${rmDir} ${dir}${sep}.tmp",
+            ".rs": "cd ${dir} && rustc ${filename} --out-dir .tmp && ${dir}${sep}.tmp${sep}${filenameWithoutExt} && ${rmDir} ${dir}${sep}.tmp",
             ".py": "cd ${dir} && python -u ${filename}",
             ".ps1": "cd ${dir} && .${sep}${filename}",
             ".bat": "cd ${dir} && .${sep}${filenameWithoutExt}"

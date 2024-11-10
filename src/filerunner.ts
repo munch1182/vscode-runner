@@ -1,5 +1,6 @@
 import path from "path";
 import { Config, Env, Terminal } from "./env";
+import * as os from "os";
 
 export function runFile(env: Env) {
   if (!env.filePath) {
@@ -61,6 +62,11 @@ class EnvFile {
       .replace(/\${filenameWithoutExt}/g, this.fileNameWithoutExt);
     if (this.fileExtIncludeDot) {
       str = str.replace(/\${filename}/g, this.fileFullName());
+    }
+    if (os.platform() === "win32") {
+      str = str.replace(/\${rmDir}/g, "rmdir /s /q");
+    } else {
+      str = str.replace(/\${rmDir}/g, "rm -rf");
     }
     return str;
   }
