@@ -14,13 +14,23 @@ export abstract class Project {
     this.file = file;
   }
 
-  static findProject(dir: string, untill: string): Project | undefined {
+  /**
+   * 解析结构，转换成项目对象
+   */
+  static findProject(env: Env): Project | undefined {
+    if (!env.filePath || !env.workspaceDir) {
+      return undefined;
+    }
+
     let finders = [
-      (f: Finder) => TauriProject.find(f),
-      (f: Finder) => NodejsProject.find(f),
-      (f: Finder) => RustProject.find(f),
+      // Tauri会包含Node的判断
+      (f: Finder) => TauriSimpleProject.findPlusNodejs(f),
+      // (f: Finder) => NodejsProject.find(f),
+      (f: Finder) => RustProject.find(f, env),
     ];
 
+    const dir = path.dirname(env.filePath);
+    const untill = env.workspaceDir;
     const finder = new Finder(dir, untill);
     for (const find of finders) {
       const found = find(finder);
@@ -32,8 +42,14 @@ export abstract class Project {
     return undefined;
   }
 
+  /**
+   * 返回真实运行命令
+   */
   abstract runCode(): string | undefined;
 
+  /**
+   * 根据配置名返回默认命令
+   */
   runCodeSimple(key: string): string | undefined {
     const runCode = Config.getProjectRunCodeFromConfig(key);
     return runCode ? `cd ${this.dir} && ${runCode}` : undefined;
@@ -44,7 +60,7 @@ export abstract class Project {
  * 从dir中寻找是否存在file同名文件，从dir向外逐级寻找，直到untill为止
  *
  * 直接从当前运行文件所在文件夹位置寻找该文件是否存在即可
- * 不需要遍历文件夹和文件，因为该特定文件总是在项目最外层
+ * 不需要遍历文件夹和文件，因为一般项目该特定文件总是在项目最外层
  */
 class Finder {
   private readonly untill!: string;
@@ -87,6 +103,11 @@ export abstract class OneLevelProject extends Project {
   }
 }
 
+/**
+ * 如果包含package.json文件，则包含package.json文件的文件夹认为是一个Node项目
+ *
+ * 执行默认命令'npm run dev'
+ */
 export class NodejsProject extends OneLevelProject {
   static find(finder: Finder): NodejsProject | undefined {
     const pkgJson = finder.findSimple("package.json");
@@ -102,29 +123,77 @@ export class NodejsProject extends OneLevelProject {
   }
 }
 
+/**
+ * 如果包含Cargo.toml文件，则包含Cargo.toml文件的文件夹认为是一个Rust项目
+ *
+ * 如果Rust项目中包含src/main.rs文件，则执行默认命令`cargo run`
+ * 如果不包含main.rs，但包含examples文件夹，则以--example执行当前打开的/第一个examples文件夹中的文件
+ *
+ * 否则执行默认命令`cargo run`
+ */
 export class RustProject extends OneLevelProject {
-  static find(finder: Finder): RustProject | undefined {
+  static find(finder: Finder, env: Env): RustProject | undefined {
     const cargoToml = finder.findSimple("Cargo.toml");
-    return cargoToml ? new RustProject(cargoToml) : undefined;
+    return cargoToml ? new RustProject(cargoToml, env.filePath) : undefined;
   }
 
-  constructor(cargoToml: string) {
+  private readonly activeFile!: string | undefined;
+
+  constructor(cargoToml: string, activeFile: string | undefined) {
     super(cargoToml);
+    this.activeFile = activeFile;
   }
 
   runCode(): string | undefined {
-    return this.runCodeSimple("rust");
+    const defaultCode = this.runCodeSimple("rust");
+    // 以下都是附加命令
+    if (!defaultCode) {
+      return undefined;
+    }
+    let mainRs = path.join(this.dir, "src", "main.rs");
+    Env.log(`Find: ${mainRs}`);
+    // 如果有main.rs，则直接运行默认命令
+    if (fs.existsSync(mainRs)) {
+      Env.log(`Find: ${mainRs} exist`);
+      return `cd ${this.dir} && ${defaultCode}`;
+    }
+    // 如果没有main.rs，则尝试判断examples
+    let examples = path.join(this.dir, "examples");
+    Env.log(`Find: ${examples}`);
+    if (fs.existsSync(examples)) {
+      Env.log(`Find: ${examples} exist`);
+      const file = this.activeFile || fs.readdirSync(examples)[0];
+      let filename;
+      // 如果在examples文件夹中
+      if (path.dirname(file) === examples) {
+        filename = path.basename(file);
+      } else {
+        filename = fs.readdirSync(examples)[0];
+      }
+      Env.log(`examples filename: ${filename}`);
+      if (filename.endsWith(".rs")) {
+        const codeName = filename.replace(".rs", "");
+        // 暂无法为examples手动设置命令
+        return `${defaultCode} --example ${codeName}`;
+      }
+    }
+    return defaultCode;
   }
 }
 
-export class TauriProject extends Project {
-  static find(finder: Finder): TauriProject | undefined {
+/**
+ * 默认结构：如果这是一个node项目，且包含src-tauri/tauri.conf.json文件，则认为是一个tauri项目
+ *
+ * 执行默认命令'npm run tauri dev'
+ */
+export class TauriSimpleProject extends Project {
+  static findPlusNodejs(finder: Finder): TauriSimpleProject | undefined {
     const node = NodejsProject.find(finder);
     if (node) {
       // rename?
       const tauriConf = path.join(node.dir, "src-tauri", "tauri.conf.json");
       if (fs.existsSync(tauriConf)) {
-        return new TauriProject(tauriConf);
+        return new TauriSimpleProject(tauriConf);
       }
       return node;
     }

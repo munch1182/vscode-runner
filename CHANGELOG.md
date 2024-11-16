@@ -2,6 +2,10 @@
 
 All notable changes to the "munch1182-vscode-runner" extension will be documented in this file.
 
+## [0.2.2]
+
+当运行`rust`的`examples`文件夹中文件时, 会运行`--example`命令
+
 ## [0.2.1]
 
 - 修复 tauri 项目无法运行的问题

@@ -1,6 +1,5 @@
 import { Env, Terminal } from "./env";
 import fs from "fs";
-import path from "path";
 import { Project } from "./project";
 
 export function runProject(env: Env) {
@@ -17,11 +16,8 @@ export function runProject(env: Env) {
     Env.notifyErr(`No file found`);
     return;
   }
-  const project = Project.findProject(
-    path.dirname(env.filePath),
-    env.workspaceDir
-  );
 
+  const project = Project.findProject(env);
   if (!project) {
     Env.notifyErr(`Unkown project`);
     return;
