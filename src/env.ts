@@ -64,12 +64,18 @@ export class Terminal {
   private static readonly NAME_TERMINAL = "runner";
 
   static execute(cmd: string) {
-    const terminal = this.getTerminal();
+    const tm = this.getTerminalManager();
+    const terminal = tm.terminal;
 
     const endcmd = Terminal.convertCmd4Powershell(cmd, terminal);
 
     terminal.show();
-    terminal.sendText(endcmd);
+    if (tm.isCreatedNow) {
+      // 避免创建时内容出现在路径前
+      setTimeout(() => terminal.sendText(endcmd), 200);
+    } else {
+      terminal.sendText(endcmd);
+    }
   }
 
   /**
@@ -94,18 +100,29 @@ export class Terminal {
     return cmd;
   }
 
-  private static getTerminal(): vscode.Terminal {
-    const terminals = vscode.window.terminals;
-    let terminal = terminals.find((t) => t.name === Terminal.NAME_TERMINAL);
-
-    if (!terminal) {
-      terminal = vscode.window.createTerminal({
-        name: Terminal.NAME_TERMINAL,
-        // 设置才能获取，默认可能为空
-        shellPath: vscode.env.shell,
-      });
+  private static getTerminalManager(): TerminalManager {
+    const terminal = vscode.window.terminals.find(
+      (t) => t.name === Terminal.NAME_TERMINAL
+    );
+    if (terminal) {
+      return new TerminalManager(terminal, false);
     }
 
-    return terminal;
+    const newTerminal = vscode.window.createTerminal({
+      name: Terminal.NAME_TERMINAL,
+      // 设置才能获取，默认可能为空
+      shellPath: vscode.env.shell,
+    });
+    return new TerminalManager(newTerminal, true);
+  }
+}
+
+class TerminalManager {
+  readonly terminal!: vscode.Terminal;
+  readonly isCreatedNow!: boolean;
+
+  constructor(terminal: vscode.Terminal, isCreatedNow: boolean) {
+    this.terminal = terminal;
+    this.isCreatedNow = isCreatedNow;
   }
 }

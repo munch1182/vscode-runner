@@ -2,9 +2,13 @@
 
 All notable changes to the "munch1182-vscode-runner" extension will be documented in this file.
 
+## [0.2.3]
+
+修复第一次使用`terminal`时的内容可能出现在路径前的问题。
+
 ## [0.2.2]
 
-当运行`rust`的`examples`文件夹中文件时, 会运行`--example`命令
+当运行`rust`的`examples`文件夹中文件时, 会运行`--example`命令。
 
 ## [0.2.1]
 
