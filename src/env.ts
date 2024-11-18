@@ -72,7 +72,7 @@ export class Terminal {
     terminal.show();
     if (tm.isCreatedNow) {
       // 避免创建时内容出现在路径前
-      setTimeout(() => terminal.sendText(endcmd), 200);
+      setTimeout(() => terminal.sendText(endcmd), 300);
     } else {
       terminal.sendText(endcmd);
     }

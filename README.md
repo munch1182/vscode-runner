@@ -13,3 +13,4 @@ add editor/context:
 ## setting
 
 `vscode-runner.fileRunner`
+`vscode-runner.projectRunner`

@@ -155,26 +155,29 @@ export class RustProject extends OneLevelProject {
     // 如果有main.rs，则直接运行默认命令
     if (fs.existsSync(mainRs)) {
       Env.log(`Find: ${mainRs} exist`);
-      return `cd ${this.dir} && ${defaultCode}`;
+      return `${defaultCode}`;
     }
     // 如果没有main.rs，则尝试判断examples
     let examples = path.join(this.dir, "examples");
     Env.log(`Find: ${examples}`);
     if (fs.existsSync(examples)) {
       Env.log(`Find: ${examples} exist`);
-      const file = this.activeFile || fs.readdirSync(examples)[0];
-      let filename;
-      // 如果在examples文件夹中
-      if (path.dirname(file) === examples) {
-        filename = path.basename(file);
-      } else {
-        filename = fs.readdirSync(examples)[0];
-      }
-      Env.log(`examples filename: ${filename}`);
-      if (filename.endsWith(".rs")) {
-        const codeName = filename.replace(".rs", "");
-        // 暂无法为examples手动设置命令
-        return `${defaultCode} --example ${codeName}`;
+
+      // 判断是否是examples中文件
+      const sureActiveFile =
+        this.activeFile && this.activeFile.includes(examples);
+
+      const file = sureActiveFile
+        ? this.activeFile
+        : fs.readdirSync(examples)[0];
+      if (file) {
+        const filename = path.basename(file);
+        Env.log(`examples filename: ${filename}`);
+        if (filename.endsWith(".rs")) {
+          const codeName = filename.replace(".rs", "");
+          // 暂无法为examples手动设置命令
+          return `${defaultCode} --example ${codeName}`;
+        }
       }
     }
     return defaultCode;
