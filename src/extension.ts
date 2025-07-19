@@ -4,7 +4,7 @@ import { runFile as rf } from "./filerunner";
 import { runProject as rp } from "./projectrunner";
 
 export function activate(context: vscode.ExtensionContext) {
-  Env.ENABLE_LOG = false;
+  Env.ENABLE_LOG = true;
   Env.log("activate");
   const fileRunner = vscode.commands.registerCommand(
     "munch1182-vscode-runner.runFile",

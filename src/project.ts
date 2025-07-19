@@ -23,6 +23,8 @@ export abstract class Project {
     }
 
     let finders = [
+      // 寻找cmd.run文件, 该设置优先级第二
+      (f: Finder) => CmdProject.find(f, env),
       // Tauri会包含Node的判断
       (f: Finder) => TauriSimpleProject.findPlusNodejs(f),
       // (f: Finder) => NodejsProject.find(f),
@@ -78,6 +80,18 @@ class Finder {
    */
   findSimple(filename: string): string | undefined {
     return this._findFromCurr2Out(filename, this.startDir);
+  }
+
+  findCmdFile(workdir: string | undefined): string | undefined {
+    if (!workdir) {
+      return undefined;
+    }
+    const cmder = path.join(workdir, "cmd.run");
+    if (fs.existsSync(cmder)) {
+      Env.log(`Find: ${cmder} exist`);
+      return cmder;
+    }
+    return undefined;
   }
 
   _findFromCurr2Out(filename: string, dir: string): string | undefined {
@@ -210,5 +224,25 @@ export class TauriSimpleProject extends Project {
 
   runCode(): string | undefined {
     return this.runCodeSimple("tauri");
+  }
+}
+
+/**
+ * 如果打开的目录下配置了cmd.runner，则认为是直接运行给文件的命令
+ * 且运行路径在打开的目录
+ */
+export class CmdProject extends Project {
+  static find(finder: Finder, env: Env): CmdProject | undefined {
+    const cmdFile = finder.findCmdFile(env.workspaceDir);
+    return cmdFile ? new CmdProject(cmdFile) : undefined;
+  }
+
+  constructor(cmdFile: string) {
+    super(path.dirname(cmdFile), cmdFile);
+  }
+
+  runCode(): string | undefined {
+    let cmd = fs.readFileSync(this.file);
+    return cmd.toString();
   }
 }

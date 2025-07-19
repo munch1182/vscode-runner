@@ -7,25 +7,33 @@ export function runFile(env: Env) {
     Env.notifyErr(`No file path found`);
     return;
   }
+
   const fileEnv = new EnvFile(env.filePath);
   Env.log(`Running file: ${fileEnv.contactPath()}`);
 
-  const dotExt = fileEnv.fileExtIncludeDot;
-  if (!dotExt) {
-    Env.notifyErr(`No run code found for file: ${fileEnv.fileFullName()}`);
-    return;
-  }
+  // 从配置中获取curr, 该设置优先级最高
+  let configCode = Config.getFileRunCodeFromConfigCurr();
 
-  // 根据文件后缀从配置中获取运行代码
-  let configCode: string | undefined = Config.getFileRunCodeFromConfig(dotExt);
-  Env.log(`Run code: ${fileEnv.fileExtIncludeDot} => ${configCode}`);
-  if (!configCode) {
-    Env.notifyErr(`No run code found for file: ${fileEnv.fileFullName()}`);
-    return;
-  }
+  if (configCode) {
+    Env.log(`Cmd from curr config: ${configCode}`);
+  } else {
+    const dotExt = fileEnv.fileExtIncludeDot;
+    if (!dotExt) {
+      Env.notifyErr(`No run code found for file: ${fileEnv.fileFullName()}`);
+      return;
+    }
 
+    // 根据文件后缀从配置中获取运行代码
+    configCode = Config.getFileRunCodeFromConfig(dotExt);
+    Env.log(`Run code: ${fileEnv.fileExtIncludeDot} => ${configCode}`);
+    if (!configCode) {
+      Env.notifyErr(`No run code found for file: ${fileEnv.fileFullName()}`);
+      return;
+    }
+  }
   // 将配置内容参数替换为实际内容
   const runCode = fileEnv.convertCode(configCode);
+
   Env.log(`Run code: ===>  ${runCode}`);
 
   Terminal.execute(runCode);

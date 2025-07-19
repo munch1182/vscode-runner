@@ -51,12 +51,29 @@ export class Config {
   }
 
   /**
+   * 直接获取当前文件的运行命令, 而不是根据类型
+   */
+  static getFileRunCodeFromConfigCurr(): string | undefined {
+    const code = this.getFileRunCodeFromConfig<string>("curr")
+    return (code === undefined || code === "undefined") ? undefined : code;
+  }
+
+  /**
    * 从配置中获取项目运行命令
    */
   static getProjectRunCodeFromConfig<T>(key: string): T | undefined {
     return vscode.workspace
       .getConfiguration(this.NAME_CONFIG_SECTION)
       .get<any>(this.NAME_CONFIG_PROJECT_RUNNER)[key];
+  }
+
+  /**
+   * 直接获取当前文件的运行命令, 而不是根据类型
+   */
+  static getProjectRunCodeFromConfigCurr(): string | undefined {
+    const code = this.getProjectRunCodeFromConfig<string>("curr")
+    Env.log("code: ", code, typeof code);
+    return (code === undefined || code == "undefined") ? undefined : code;
   }
 }
 

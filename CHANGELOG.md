@@ -2,6 +2,11 @@
 
 All notable changes to the "munch1182-vscode-runner" extension will be documented in this file.
 
+## [0.3.1]
+
+增加设置中`curr`项的设置，该设置优先级最高。
+增加项目运行命令时对根目录下`cmd.run`配置文件，该文件优先于类型配置。
+
 ## [0.2.3]
 
 修复第一次使用`terminal`时的内容可能出现在路径前的问题。
