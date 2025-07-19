@@ -2,6 +2,11 @@
 
 All notable changes to the "munch1182-vscode-runner" extension will be documented in this file.
 
+## [0.3.2]
+
+修复打包错误，`engines`升级到`vscode:1.102.0`。
+修复读取`cmd.run`文件时，需要手动切换文件夹路径的问题。
+
 ## [0.3.1]
 
 增加设置中`curr`项的设置，该设置优先级最高。

@@ -243,6 +243,6 @@ export class CmdProject extends Project {
 
   runCode(): string | undefined {
     let cmd = fs.readFileSync(this.file);
-    return cmd.toString();
+    return `cd ${this.dir} && ${cmd.toString()}`;
   }
 }

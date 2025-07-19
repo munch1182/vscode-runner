@@ -5,9 +5,9 @@
   "publisher": "munch1182",
   "author": "munch1182",
   "license": "MIT",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "engines": {
-    "vscode": "^1.92.0"
+    "vscode": "^1.102.0"
   },
   "categories": [
     "Other"
